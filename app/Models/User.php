@@ -3,15 +3,19 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserRole;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, HasUuids, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -22,6 +26,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'country_code',
+        'currency_code',
     ];
 
     /**
@@ -44,6 +51,27 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
         ];
+    }
+
+    public function paymentRequests(): HasMany
+    {
+        return $this->hasMany(PaymentRequest::class);
+    }
+
+    public function approvedPaymentRequests(): HasMany
+    {
+        return $this->hasMany(PaymentRequest::class, 'approved_by');
+    }
+
+    public function isFinance(): bool
+    {
+        return $this->role === UserRole::Finance;
+    }
+
+    public function isEmployee(): bool
+    {
+        return $this->role === UserRole::Employee;
     }
 }
